@@ -1,4 +1,4 @@
-﻿import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import RecordatoriosSection from '../components/recordatorios/recordatorios-section';
 
 export default function RecordatoriosScreen() {

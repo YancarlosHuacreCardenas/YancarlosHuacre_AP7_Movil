@@ -1,4 +1,4 @@
-﻿import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import PermisosSection from '../components/permisos/permisos-section';
 
 export default function PermisosScreen() {

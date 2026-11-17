@@ -1,73 +1,194 @@
-import { useEffect, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, Alert, TextInput, ActivityIndicator } from 'react-native';
-import { configureNotifications, scheduleReminder, getScheduledReminderCount, cancelAllReminders } from '../../services/notification.service';
+import { useCallback, useEffect, useState } from 'react';
+import { ActivityIndicator, Alert, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { cancelAllReminders, cancelReminder, getScheduledReminders, scheduleReminder, type ScheduledReminder } from '../../services/notification.service';
 import { COLORS } from '../../constants/colors';
+
+const PRESETS = [{ label: '10 s', value: 10 }, { label: '30 s', value: 30 }, { label: '1 min', value: 60 }, { label: '5 min', value: 300 }];
 
 export default function RecordatoriosSection() {
   const [seconds, setSeconds] = useState('10');
-  const [pendingCount, setPendingCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const refreshCount = async () => {
-    try { setPendingCount(await getScheduledReminderCount()); }
-    catch { Alert.alert('Error', 'No se pudieron consultar los recordatorios.'); }
-  };
-  useEffect(() => {
-    let active = true;
-    getScheduledReminderCount().then((count) => { if (active) setPendingCount(count); }).catch(() => {
-      if (active) Alert.alert('Error', 'No se pudieron consultar los recordatorios.');
-    });
-    return () => { active = false; };
+  const [title, setTitle] = useState('Recordatorio');
+  const [message, setMessage] = useState('Es momento de revisar tu app.');
+  const [reminders, setReminders] = useState<ScheduledReminder[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [refreshing, setRefreshing] = useState(true);
+
+  const refresh = useCallback(async () => {
+    setRefreshing(true);
+    try { setReminders(await getScheduledReminders()); }
+    catch { Alert.alert('Error', 'No se pudieron consultar los avisos.'); }
+    finally { setRefreshing(false); }
   }, []);
-  const programarRecordatorio = async () => {
+
+  useEffect(() => {
+    let mounted = true;
+    getScheduledReminders().then((items) => { if (mounted) setReminders(items); })
+      .catch(() => { if (mounted) Alert.alert('Error', 'No se pudieron consultar los avisos.'); })
+      .finally(() => { if (mounted) setRefreshing(false); });
+    return () => { mounted = false; };
+  }, []);
+
+  const createReminder = async () => {
     const delay = Number(seconds);
     if (!Number.isInteger(delay) || delay < 5 || delay > 86400) {
-      Alert.alert('Tiempo no válido', 'Elige entre 5 y 86400 segundos (24 horas).'); return;
+      Alert.alert('Tiempo no válido', 'Elige entre 5 segundos y 24 horas.');
+      return;
+    }
+    if (!title.trim() || !message.trim()) {
+      Alert.alert('Completa los campos', 'Escribe un título y un mensaje.');
+      return;
     }
     try {
-      setLoading(true); await configureNotifications(); await scheduleReminder(delay); await refreshCount();
-      Alert.alert('Recordatorio programado', 'Recibirás una notificación en ' + delay + ' segundos.');
+      setBusy(true);
+      await scheduleReminder(delay, title, message);
+      await refresh();
+      Alert.alert('Aviso programado', '“' + title.trim() + '” se mostrará en ' + duration(delay) + '.');
     } catch (error) {
       Alert.alert('No se pudo programar', error instanceof Error ? error.message : 'Inténtalo de nuevo.');
-    } finally { setLoading(false); }
+    } finally { setBusy(false); }
   };
-  const cancelarRecordatorios = async () => {
+
+  const removeOne = async (id: string) => {
+    try { setBusy(true); await cancelReminder(id); await refresh(); }
+    catch { Alert.alert('Error', 'No se pudo cancelar el aviso.'); }
+    finally { setBusy(false); }
+  };
+
+  const removeAll = async () => {
     try {
-      setLoading(true); await cancelAllReminders(); await refreshCount();
-      Alert.alert('Recordatorios cancelados', 'Se eliminaron todas las notificaciones pendientes.');
-    } catch { Alert.alert('Error', 'No se pudieron cancelar los recordatorios.'); }
-    finally { setLoading(false); }
+      setBusy(true);
+      await cancelAllReminders();
+      await refresh();
+      Alert.alert('Avisos cancelados', 'Ya no hay notificaciones pendientes.');
+    } catch { Alert.alert('Error', 'No se pudieron cancelar los avisos.'); }
+    finally { setBusy(false); }
   };
+
+  const confirmRemoveAll = () => Alert.alert('Cancelar todos los avisos', 'Se eliminarán todas las notificaciones pendientes.', [
+    { text: 'Volver', style: 'cancel' },
+    { text: 'Cancelar todos', style: 'destructive', onPress: () => { void removeAll(); } },
+  ]);
+
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Recordatorios</Text>
-      <Text style={styles.subtitle}>Programa notificaciones locales y administra las que siguen pendientes.</Text>
-      <View style={styles.iconContainer}><Text style={styles.icon}>🔔</Text></View>
-      <Text style={styles.label}>Avisarme dentro de (segundos)</Text>
-      <TextInput accessibilityLabel="Segundos hasta el recordatorio" style={styles.input} value={seconds}
-        onChangeText={(value) => setSeconds(value.replace(/[^0-9]/g, '').slice(0, 5))}
-        keyboardType="number-pad" maxLength={5} placeholder="Ej. 30" />
-      <Text style={styles.hint}>Mínimo 5 segundos · máximo 24 horas</Text>
-      <View style={styles.counter}><Text style={styles.counterNumber}>{pendingCount}</Text>
-        <Text style={styles.counterLabel}>{pendingCount === 1 ? 'recordatorio pendiente' : 'recordatorios pendientes'}</Text></View>
-      <Pressable style={[styles.button, loading && styles.disabled]} onPress={programarRecordatorio} disabled={loading}>
-        {loading ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.buttonText}>Programar recordatorio</Text>}
+    <View style={styles.card}>
+      <View style={styles.hero}>
+        <Text style={styles.heroIcon}>{String.fromCodePoint(0x1F514)}</Text>
+        <Text style={styles.title}>Mis recordatorios</Text>
+        <Text style={styles.subtitle}>Edita el aviso y elige cuándo quieres recibirlo.</Text>
+      </View>
+
+      <Text style={styles.label}>Título</Text>
+      <TextInput accessibilityLabel="Título del recordatorio" style={styles.input} value={title} onChangeText={setTitle} placeholder="Ej. Revisar mis tareas" maxLength={60} returnKeyType="next" />
+
+      <Text style={styles.label}>Mensaje</Text>
+      <TextInput accessibilityLabel="Mensaje del recordatorio" style={[styles.input, styles.messageInput]} value={message} onChangeText={setMessage} placeholder="¿Qué quieres recordar?" maxLength={140} multiline textAlignVertical="top" />
+
+      <Text style={styles.label}>¿Cuándo te aviso?</Text>
+      <View style={styles.presets}>
+        {PRESETS.map((item) => {
+          const selected = Number(seconds) === item.value;
+          return <Pressable key={item.value} accessibilityRole="button" accessibilityState={{ selected }} style={({ pressed }) => [styles.preset, selected && styles.presetSelected, pressed && styles.pressed]} onPress={() => setSeconds(String(item.value))}>
+            <Text style={[styles.presetText, selected && styles.presetTextSelected]}>{item.label}</Text>
+          </Pressable>;
+        })}
+      </View>
+      <View style={styles.customRow}>
+        <Text style={styles.customLabel}>Tiempo personalizado</Text>
+        <View style={styles.secondsWrap}>
+          <TextInput accessibilityLabel="Intervalo en segundos" style={styles.secondsInput} value={seconds} onChangeText={(value) => setSeconds(value.replace(/[^0-9]/g, '').slice(0, 5))} keyboardType="number-pad" maxLength={5} placeholder="10" />
+          <Text style={styles.unit}>seg</Text>
+        </View>
+      </View>
+      <Text style={styles.hint}>Desde 5 segundos hasta 24 horas.</Text>
+
+      <Pressable accessibilityRole="button" style={({ pressed }) => [styles.primary, (busy || !title.trim() || !message.trim()) && styles.disabled, pressed && styles.pressed]} onPress={createReminder} disabled={busy || !title.trim() || !message.trim()}>
+        {busy ? <ActivityIndicator color={COLORS.white} /> : <Text style={styles.primaryText}>Programar recordatorio</Text>}
       </Pressable>
-      <Pressable style={[styles.cancelButton, (loading || pendingCount === 0) && styles.disabled]} onPress={cancelarRecordatorios} disabled={loading || pendingCount === 0}>
-        <Text style={styles.cancelText}>Cancelar todos los pendientes</Text>
-      </Pressable>
+
+      <View style={styles.listHeader}>
+        <View><Text style={styles.listTitle}>Pendientes</Text><Text style={styles.listSubtitle}>{reminders.length} {reminders.length === 1 ? 'aviso' : 'avisos'}</Text></View>
+        <Pressable accessibilityRole="button" style={({ pressed }) => [styles.refresh, pressed && styles.pressed]} onPress={refresh} disabled={refreshing || busy}>
+          <Text style={styles.refreshText}>{refreshing ? 'Actualizando…' : 'Actualizar'}</Text>
+        </Pressable>
+      </View>
+
+      {refreshing ? <ActivityIndicator color={COLORS.primary} style={styles.spinner} /> : reminders.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyIcon}>{String.fromCodePoint(0x1F5D3)}</Text>
+          <Text style={styles.emptyTitle}>Aún no tienes avisos</Text>
+          <Text style={styles.emptyText}>Cuando programes uno, aparecerá aquí.</Text>
+        </View>
+      ) : <View style={styles.list}>
+        {reminders.map((item) => <View key={item.identifier} style={styles.reminder}>
+          <View style={styles.reminderCopy}>
+            <Text style={styles.reminderTitle} numberOfLines={1}>{item.content.title || 'Recordatorio'}</Text>
+            <Text style={styles.reminderMessage} numberOfLines={2}>{item.content.body || 'Sin mensaje'}</Text>
+          </View>
+          <Pressable accessibilityRole="button" accessibilityLabel={'Cancelar ' + (item.content.title || 'recordatorio')} style={({ pressed }) => [styles.remove, pressed && styles.pressed]} onPress={() => removeOne(item.identifier)} disabled={busy}>
+            <Text style={styles.removeText}>Cancelar</Text>
+          </Pressable>
+        </View>)}
+      </View>}
+
+      {reminders.length > 0 && <Pressable accessibilityRole="button" style={({ pressed }) => [styles.removeAll, busy && styles.disabled, pressed && styles.pressed]} onPress={confirmRemoveAll} disabled={busy}>
+        <Text style={styles.removeAllText}>Cancelar todos</Text>
+      </Pressable>}
     </View>
   );
 }
+
+function duration(value: number) {
+  const hours = Math.floor(value / 3600);
+  const minutes = Math.floor((value % 3600) / 60);
+  const seconds = value % 60;
+  const parts: string[] = [];
+  if (hours) parts.push(hours + (hours === 1 ? ' hora' : ' horas'));
+  if (minutes) parts.push(minutes + (minutes === 1 ? ' minuto' : ' minutos'));
+  if (seconds || parts.length === 0) parts.push(seconds + (seconds === 1 ? ' segundo' : ' segundos'));
+  return parts.join(' y ');
+}
+
 const styles = StyleSheet.create({
-  container: { backgroundColor: COLORS.surface, padding: 22, borderRadius: 20, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' },
-  title: { fontSize: 24, fontWeight: 'bold', color: COLORS.text },
-  subtitle: { color: COLORS.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
-  iconContainer: { width: 88, height: 88, borderRadius: 44, backgroundColor: '#E8F5FD', justifyContent: 'center', alignItems: 'center', marginVertical: 20 },
-  icon: { fontSize: 42 }, label: { width: '100%', color: COLORS.text, fontWeight: '600', marginBottom: 8 },
-  input: { width: '100%', borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#FAFCFE', borderRadius: 12, padding: 14, color: COLORS.text, fontSize: 18, textAlign: 'center' },
-  hint: { width: '100%', color: COLORS.textSecondary, fontSize: 12, marginTop: 7 },
-  counter: { width: '100%', backgroundColor: '#F4F9FC', borderRadius: 12, padding: 14, alignItems: 'center', marginVertical: 18 },
-  counterNumber: { color: COLORS.primary, fontSize: 25, fontWeight: 'bold' }, counterLabel: { color: COLORS.textSecondary, fontSize: 13, marginTop: 2 },
-  button: { backgroundColor: COLORS.primary, padding: 16, width: '100%', borderRadius: 12, alignItems: 'center' }, buttonText: { color: COLORS.white, fontWeight: 'bold' },
-  cancelButton: { backgroundColor: '#FDEEEF', padding: 15, width: '100%', borderRadius: 12, alignItems: 'center', marginTop: 10 }, cancelText: { color: COLORS.danger, fontWeight: 'bold' }, disabled: { opacity: 0.5 },
+  card: { backgroundColor: COLORS.surface, padding: 22, borderRadius: 22, borderWidth: 1, borderColor: COLORS.border, marginBottom: 24 },
+  hero: { alignItems: 'center', marginBottom: 18 },
+  heroIcon: { width: 66, height: 66, lineHeight: 66, textAlign: 'center', borderRadius: 20, backgroundColor: '#E8F5FD', fontSize: 32, overflow: 'hidden', marginBottom: 12 },
+  title: { fontSize: 24, fontWeight: '800', color: COLORS.text, textAlign: 'center' },
+  subtitle: { color: COLORS.textSecondary, textAlign: 'center', marginTop: 7, lineHeight: 21 },
+  label: { color: COLORS.text, fontSize: 14, fontWeight: '700', marginTop: 15, marginBottom: 8 },
+  input: { minHeight: 50, borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#FAFCFE', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, color: COLORS.text, fontSize: 15 },
+  messageInput: { minHeight: 82, paddingTop: 13 },
+  presets: { flexDirection: 'row', gap: 8, marginTop: 3 },
+  preset: { flex: 1, backgroundColor: '#F4F9FC', borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingVertical: 11, alignItems: 'center' },
+  presetSelected: { backgroundColor: '#E8F5FD', borderColor: COLORS.primary },
+  presetText: { color: COLORS.textSecondary, fontWeight: '600', fontSize: 12 },
+  presetTextSelected: { color: COLORS.primary, fontWeight: '800' },
+  customRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 14 },
+  customLabel: { color: COLORS.text, fontWeight: '600', fontSize: 13 },
+  secondsWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, backgroundColor: '#FAFCFE', paddingHorizontal: 10 },
+  secondsInput: { minWidth: 52, paddingVertical: 8, textAlign: 'center', color: COLORS.text, fontWeight: '700', fontSize: 15 },
+  unit: { color: COLORS.textSecondary, fontSize: 12 },
+  hint: { color: COLORS.textSecondary, fontSize: 12, marginTop: 6 },
+  primary: { minHeight: 52, backgroundColor: COLORS.primary, paddingHorizontal: 16, borderRadius: 13, alignItems: 'center', justifyContent: 'center', marginTop: 20 },
+  primaryText: { color: COLORS.white, fontWeight: '800', fontSize: 15 },
+  listHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 28, marginBottom: 12 },
+  listTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  listSubtitle: { color: COLORS.textSecondary, fontSize: 12, marginTop: 3 },
+  refresh: { paddingVertical: 9, paddingHorizontal: 12, borderRadius: 10, backgroundColor: '#E8F5FD' },
+  refreshText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
+  spinner: { marginVertical: 20 },
+  empty: { backgroundColor: '#F7FAFC', borderRadius: 14, alignItems: 'center', padding: 20 },
+  emptyIcon: { fontSize: 26, marginBottom: 7 },
+  emptyTitle: { color: COLORS.text, fontWeight: '700', fontSize: 14 },
+  emptyText: { color: COLORS.textSecondary, textAlign: 'center', fontSize: 12, lineHeight: 18, marginTop: 5 },
+  list: { gap: 9 },
+  reminder: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: COLORS.border, backgroundColor: '#FAFCFE', borderRadius: 13, padding: 12, gap: 10 },
+  reminderCopy: { flex: 1 },
+  reminderTitle: { color: COLORS.text, fontWeight: '700', fontSize: 14 },
+  reminderMessage: { color: COLORS.textSecondary, fontSize: 12, lineHeight: 17, marginTop: 3 },
+  remove: { minHeight: 38, justifyContent: 'center', paddingHorizontal: 11, borderRadius: 9, backgroundColor: '#FDEEEF' },
+  removeText: { color: COLORS.danger, fontWeight: '700', fontSize: 12 },
+  removeAll: { minHeight: 46, backgroundColor: '#FDEEEF', borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginTop: 12 },
+  removeAllText: { color: COLORS.danger, fontWeight: '800', fontSize: 14 },
+  disabled: { opacity: 0.55 },
+  pressed: { opacity: 0.75, transform: [{ scale: 0.99 }] },
 });

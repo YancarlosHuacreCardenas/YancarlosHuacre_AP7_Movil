@@ -1,4 +1,4 @@
-﻿import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import DatosSection from '../components/datos/datos-section';
 import { COLORS } from '../constants/colors';
 

@@ -1,4 +1,4 @@
-﻿export const COLORS = {
+export const COLORS = {
   primary: '#269BD8',
   primaryDark: '#1677B8',
   secondary: '#80D4F2',

@@ -1,4 +1,4 @@
-﻿import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
 import PerfilSection from '../components/perfil/perfil-section';
 import { COLORS } from '../constants/colors';
 

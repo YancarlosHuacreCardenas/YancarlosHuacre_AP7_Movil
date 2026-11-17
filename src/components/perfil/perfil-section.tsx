@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -29,7 +29,7 @@ export default function PerfilSection() {
       try {
         const savedPhoto = await getProfilePhoto();
         setImageUri(savedPhoto);
-      } catch (error) {
+      } catch {
         Alert.alert('Error', 'No se pudo recuperar la fotografía.');
       } finally {
         setLoading(false);
@@ -45,7 +45,7 @@ export default function PerfilSection() {
       await saveProfilePhoto(uri);
       setImageUri(uri);
       Alert.alert('Éxito', 'Fotografía guardada correctamente.');
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo guardar la fotografía.');
     }
   };
@@ -74,7 +74,7 @@ export default function PerfilSection() {
       if (!result.canceled && result.assets.length > 0) {
         await actualizarFotografia(result.assets[0].uri);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo abrir la cámara.');
     }
   };
@@ -103,7 +103,7 @@ export default function PerfilSection() {
       if (!result.canceled && result.assets.length > 0) {
         await actualizarFotografia(result.assets[0].uri);
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Error', 'No se pudo abrir la galería.');
     }
   };
@@ -122,7 +122,7 @@ export default function PerfilSection() {
             try {
               await deleteProfilePhoto();
               setImageUri(null);
-            } catch (error) {
+            } catch {
               Alert.alert('Error', 'No se pudo eliminar la fotografía.');
             }
           },

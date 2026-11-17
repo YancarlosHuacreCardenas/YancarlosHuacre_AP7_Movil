@@ -1,7 +1,8 @@
-﻿import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { AppState } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 
 export interface DevicePermissions {
   camera: boolean;
@@ -10,27 +11,18 @@ export interface DevicePermissions {
 }
 
 export function useDevicePermissions() {
-  const [permissions, setPermissions] = useState<DevicePermissions>({
-    camera: false,
-    gallery: false,
-    notifications: false,
-  });
-
+  const [permissions, setPermissions] = useState<DevicePermissions>({ camera: false, gallery: false, notifications: false });
   const [loading, setLoading] = useState(true);
 
   const refreshPermissions = useCallback(async () => {
+    setLoading(true);
     try {
       const [camera, gallery, notifications] = await Promise.all([
         ImagePicker.getCameraPermissionsAsync(),
         ImagePicker.getMediaLibraryPermissionsAsync(),
         Notifications.getPermissionsAsync(),
       ]);
-
-      setPermissions({
-        camera: camera.granted,
-        gallery: gallery.granted,
-        notifications: notifications.granted,
-      });
+      setPermissions({ camera: camera.granted, gallery: gallery.granted, notifications: notifications.granted });
     } catch (error) {
       console.error('Error consultando permisos:', error);
     } finally {
@@ -39,18 +31,14 @@ export function useDevicePermissions() {
   }, []);
 
   useEffect(() => {
-    refreshPermissions();
-
-    const subscription = AppState.addEventListener(
-      'change',
-      (state) => {
-        if (state === 'active') {
-          refreshPermissions();
-        }
-      },
-    );
-
-    return () => subscription.remove();
+    const initialRefresh = setTimeout(() => { void refreshPermissions(); }, 0);
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshPermissions();
+    });
+    return () => {
+      clearTimeout(initialRefresh);
+      subscription.remove();
+    };
   }, [refreshPermissions]);
 
   const requestCamera = async () => {
@@ -74,16 +62,12 @@ export function useDevicePermissions() {
   const requestNotifications = async () => {
     try {
       if (process.env.EXPO_OS === 'android') {
-        await Notifications.setNotificationChannelAsync(
-          'recordatorios',
-          {
-            name: 'Recordatorios',
-            importance: Notifications.AndroidImportance.HIGH,
-            vibrationPattern: [0, 250, 250, 250],
-          },
-        );
+        await Notifications.setNotificationChannelAsync('recordatorios', {
+          name: 'Recordatorios',
+          importance: AndroidImportance.DEFAULT,
+          vibrationPattern: [0, 250, 250, 250],
+        });
       }
-
       await Notifications.requestPermissionsAsync();
       await refreshPermissions();
     } catch (error) {
@@ -91,12 +75,5 @@ export function useDevicePermissions() {
     }
   };
 
-  return {
-    permissions,
-    loading,
-    refreshPermissions,
-    requestCamera,
-    requestGallery,
-    requestNotifications,
-  };
+  return { permissions, loading, refreshPermissions, requestCamera, requestGallery, requestNotifications };
 }
