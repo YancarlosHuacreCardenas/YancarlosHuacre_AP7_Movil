@@ -1,29 +1,144 @@
-# Mi App Móvil
+# 📱 Mi App Móvil
 
-Aplicación educativa hecha con React Native, Expo y Expo Router.
+Aplicación educativa desarrollada con **React Native, Expo y Expo Router**, que integra funcionalidades avanzadas del dispositivo móvil para mejorar la experiencia del usuario.
 
-## Funcionalidad avanzada: recordatorios locales
+## 🚀 Funcionalidades implementadas
 
-En **Recordatorios** puedes editar el título, el mensaje y el tiempo (de 5 segundos a 24 horas), ver los avisos pendientes y cancelar uno o todos.
+### 1. 🔔 Recordatorios locales
 
-## Mis Datos
+Permite programar y administrar notificaciones locales desde la aplicación.
 
-Escribe tu nombre y descripción y pulsa **Guardar información**. La app guarda esos datos en el dispositivo y los recupera al volver a abrir la pantalla. Para borrarlos, pulsa **Eliminar información** y confirma la acción en pantalla.
+- Editar el título y el mensaje de la notificación.
+- Configurar el tiempo de espera desde 5 segundos hasta 24 horas.
+- Programar recordatorios personalizados.
+- Visualizar las notificaciones pendientes.
+- Cancelar un recordatorio específico.
+- Cancelar todos los recordatorios programados.
 
-## Ejecutar y revisar
+### 2. 💾 Almacenamiento local – Mis Datos
 
-1. Instala las dependencias con `npm ci`.
-2. Inicia Expo con `npx expo start`.
-3. Abre la app en un emulador Android o dispositivo.
-4. Prueba guardar y eliminar datos, y programa una notificación desde **Recordatorios**.
+Permite guardar y recuperar información directamente en el dispositivo.
 
-Las notificaciones locales requieren Android o iOS.
+- Registrar el nombre y la descripción del usuario.
+- Guardar información mediante almacenamiento local.
+- Recuperar automáticamente los datos guardados al volver a abrir la pantalla.
+- Eliminar la información almacenada.
+- Confirmar la eliminación antes de ejecutar la acción.
 
-## Evidencias de entrega
+### 3. 📸 Cámara y galería
 
-- Captura de la pantalla implementada.
-- Capturas del guardado, borrado y aviso recibido.
-- Video breve desde el emulador o dispositivo.
-- Repositorio de GitHub actualizado.
+Permite personalizar el perfil del usuario mediante imágenes.
 
-La app también incluye foto de perfil con cámara/galería y administración de permisos.
+- Tomar fotografías utilizando la cámara del dispositivo.
+- Seleccionar imágenes desde la galería.
+- Mostrar la fotografía seleccionada como imagen de perfil.
+
+### 4. 🔐 Administración de permisos
+
+Gestiona los permisos necesarios para utilizar las funcionalidades del dispositivo.
+
+- Solicitar acceso a la cámara.
+- Solicitar acceso a la galería.
+- Gestionar los permisos de notificaciones.
+- Manejar los permisos denegados por el usuario.
+
+---
+
+## 🛠️ Tecnologías utilizadas
+
+- React Native
+- Expo
+- Expo Router
+- JavaScript / TypeScript
+- Node.js
+- npm
+- Expo Notifications
+- Expo Camera
+- Expo Image Picker
+- Almacenamiento local
+
+## ⚙️ Instalación y ejecución
+
+### 1. Instalar las dependencias
+
+```bash
+npm ci
+```
+
+### 2. Iniciar el proyecto con Expo
+
+```bash
+npx expo start
+```
+
+### 3. Ejecutar la aplicación
+
+Después de iniciar Expo, puedes:
+
+- Presionar `a` para abrir el emulador Android.
+- Escanear el código QR con Expo Go, si las funcionalidades utilizadas son compatibles con Expo Go.
+- Utilizar un dispositivo físico para probar las funcionalidades.
+
+**Importante:** Las notificaciones locales deben probarse en un entorno compatible con Android o iOS. Algunas funcionalidades y permisos pueden requerir un development build en lugar de Expo Go.
+
+---
+
+## 🧪 Pruebas de funcionamiento
+
+Se deben verificar los siguientes escenarios:
+
+| Funcionalidad | Prueba |
+|---|---|
+| Recordatorios | Programar una notificación y comprobar su recepción. |
+| Administración | Visualizar y cancelar recordatorios pendientes. |
+| Almacenamiento | Guardar nombre y descripción. |
+| Recuperación | Cerrar y volver a abrir la pantalla para comprobar los datos. |
+| Eliminación | Borrar la información y confirmar la acción. |
+| Cámara | Tomar una fotografía para el perfil. |
+| Galería | Seleccionar una imagen del dispositivo. |
+| Permisos | Comprobar las solicitudes y respuestas de permisos. |
+
+## 📸 Evidencias de entrega
+
+Para demostrar la implementación se adjuntarán las siguientes evidencias:
+
+1. Captura de la pantalla principal de la aplicación.
+2. Captura de la funcionalidad de recordatorios.
+3. Captura de una notificación local recibida.
+4. Captura del almacenamiento de información.
+5. Captura de la eliminación de información.
+6. Captura de la cámara y selección de imágenes desde la galería.
+7. Video breve demostrando el funcionamiento de la aplicación.
+
+## 📂 Estructura del proyecto
+
+La aplicación mantiene una organización modular utilizando Expo Router para la navegación y componentes independientes para sus funcionalidades.
+
+```text
+mi-app-movil/
+├── app/
+│   ├── (tabs)/
+│   ├── recordatorios/
+│   └── mis-datos/
+├── assets/
+├── components/
+├── hooks/
+├── package.json
+├── package-lock.json
+├── app.json
+└── README.md
+```
+
+*La estructura mostrada es referencial y debe ajustarse a las carpetas reales del proyecto.*
+
+---
+
+## 🎓 Información académica
+
+**Actividad:** Implementación de funcionalidades avanzadas en aplicaciones móviles.
+
+**Modalidad:** Individual.
+
+**Objetivo:** Implementar funcionalidades avanzadas utilizando React Native y Expo, integrando recursos del dispositivo móvil y almacenamiento local para mejorar la experiencia del usuario.
+
+**Estado:** Funcionalidades implementadas y listas para su verificación en un emulador o dispositivo móvil.
