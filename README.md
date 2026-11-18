@@ -1,28 +1,29 @@
-# Mi App M�vil
+# Mi App Móvil
 
-Aplicaci�n educativa desarrollada con React Native, Expo y Expo Router.
+Aplicación educativa hecha con React Native, Expo y Expo Router.
 
 ## Funcionalidad avanzada: recordatorios locales
 
-En la pantalla **Recordatorios** puedes programar una notificaci�n local con un intervalo entre 5 segundos y 24 horas, consultar cu�ntos avisos siguen pendientes y cancelar todos los avisos programados. La app solicita permiso antes de programar notificaciones y configura un canal en Android.
+En **Recordatorios** puedes editar el título, el mensaje y el tiempo (de 5 segundos a 24 horas), ver los avisos pendientes y cancelar uno o todos.
 
-## Ejecutar
+## Mis Datos
 
-1. Instala Node.js y Android Studio con un emulador configurado.
-2. Ejecuta npm ci.
-3. Inicia Expo con npx expo start y abre la app en el emulador Android.
-4. Entra en **Recordatorios**, concede el permiso, escribe un intervalo (por ejemplo, 5) y pulsa **Programar recordatorio**.
-5. Comprueba el contador y la notificaci�n; prueba tambi�n **Cancelar todos los pendientes**.
+Escribe tu nombre y descripción y pulsa **Guardar información**. La app guarda esos datos en el dispositivo y los recupera al volver a abrir la pantalla. Para borrarlos, pulsa **Eliminar información** y confirma la acción en pantalla.
 
-Las notificaciones locales requieren Android o iOS. La vista web no las programa.
+## Ejecutar y revisar
 
-## Evidencias para la entrega
+1. Instala las dependencias con `npm ci`.
+2. Inicia Expo con `npx expo start`.
+3. Abre la app en un emulador Android o dispositivo.
+4. Prueba guardar y eliminar datos, y programa una notificación desde **Recordatorios**.
 
-- Captura de la pantalla Recordatorios con el tiempo configurable y el contador.
-- Captura de la notificaci�n recibida y del contador actualizado.
-- Video breve grabado desde el emulador o dispositivo mostrando el flujo.
-- Repositorio actualizado con estos cambios.
+Las notificaciones locales requieren Android o iOS.
 
-## Otras secciones
+## Evidencias de entrega
 
-La app tambi�n incluye perfil con c�mara/galer�a, almacenamiento local de informaci�n personal y administraci�n de permisos del dispositivo.
+- Captura de la pantalla implementada.
+- Capturas del guardado, borrado y aviso recibido.
+- Video breve desde el emulador o dispositivo.
+- Repositorio de GitHub actualizado.
+
+La app también incluye foto de perfil con cámara/galería y administración de permisos.
